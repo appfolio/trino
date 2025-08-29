@@ -39,19 +39,9 @@ git checkout 476-af
 
 All development work happen in this branch.
 
-## Test and Build
+## Test
 
-### Trino
-
-Build the whole Trino:
-
-```commandline
-./mvnw clean compile -DskipTests
-```
-
-### Plugin trino-af
-
-Run tests:
+Run automated tests:
 
 ```commandline
 cd plugin/trino-af/
@@ -71,11 +61,22 @@ Access the test server:
 trino --server http://localhost:8080 --execute "select af.af.af_find_datasource_by_guid('test-guid-1')"
 ```
 
-Build and package:
+## Build
 
 ```commandline
 cd plugin/trino-af/
 ../../mvnw package
 ```
 
-`target/trino-af-476.zip` is the plugin file we need.
+`target/trino-af-476.zip` is the plugin file
+
+## Push
+
+We push a new Trino container with the plugin installed to ECR in the data-api-prod account.
+
+```commandline
+awsume data-api-prod
+./build-and-push.sh
+```
+
+The output should have the image tag which can be used in Kubernetes Trino setup.
