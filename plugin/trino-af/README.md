@@ -48,6 +48,35 @@ cd plugin/trino-af/
 ../../mvnw test
 ```
 
+### Code Coverage
+
+This plugin includes JaCoCo code coverage reporting. To generate coverage reports:
+
+```commandline
+cd plugin/trino-af/
+./run-coverage.sh
+```
+
+Or run Maven directly:
+
+```commandline
+cd plugin/trino-af/
+mvn clean test -Djacoco.skip=false -Djava.vendor="Eclipse Adoptium"
+```
+
+After running, view the coverage report:
+
+```commandline
+open target/site/jacoco/index.html
+```
+
+The coverage report shows:
+- **Instruction Coverage**: Percentage of bytecode instructions executed
+- **Branch Coverage**: Percentage of conditional branches tested
+- **Line Coverage**: Percentage of source code lines executed
+- **Method Coverage**: Percentage of methods called
+- **Class Coverage**: Percentage of classes instantiated
+
 Start a test server for manual testing:
 
 ```commandline
