@@ -69,7 +69,7 @@ public class TestRegistryFunctions
                 .skippingTypesCheck()
                 .matches("""
                         VALUES
-                        ('af_find_datasource_by_guid', 'varchar', 'varchar', 'scalar', false, 'Find datasource by vhost guid')
+                        ('af_find_datasource_by_guid', 'varchar', 'varchar', 'scalar', true, 'Find datasource by vhost guid')
                         """);
     }
 

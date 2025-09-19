@@ -80,8 +80,7 @@ public class RegistryFunctions
     private static FunctionMetadata.Builder function(String name)
     {
         return FunctionMetadata.scalarBuilder(name)
-                .functionId(new FunctionId(name))
-                .nondeterministic();
+                .functionId(new FunctionId(name));
     }
 
     private static Signature signature(TypeSignature returnType, TypeSignature... argumentTypes)
