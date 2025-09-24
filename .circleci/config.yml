@@ -1,0 +1,62 @@
+version: 2.1
+
+orbs:
+  aws-ecr: circleci/aws-ecr@8.2.1
+
+jobs:
+  test:
+    docker:
+      - image: cimg/openjdk:24.0.2
+    steps:
+      - checkout
+      - run:
+          name: Run Maven tests with coverage
+          command: |
+            cd plugin/trino-af/
+            ../../mvnw clean test -Djacoco.skip=false -Djava.vendor="Eclipse Adoptium"
+      - store_test_results:
+          path: plugin/trino-af/target/surefire-reports
+      - store_artifacts:
+          path: plugin/trino-af/target/site/jacoco
+          destination: coverage-report
+      - run:
+          name: Display coverage summary
+          command: |
+            cd plugin/trino-af/
+            if [ -f target/site/jacoco/index.html ]; then
+              echo "Coverage report generated successfully"
+              echo "View coverage report in CircleCI artifacts"
+            else
+              echo "Coverage report generation failed"
+              exit 1
+            fi
+
+  # build-and-push:
+  #   docker:
+  #     - image: cimg/base:stable
+  #   steps:
+  #     - checkout
+  #     - setup_remote_docker:
+  #         version: 20.10.14
+  #         docker_layer_caching: true
+  #     - aws-ecr/build-and-push-image:
+  #         registry-id: AWS_ACCOUNT_ID
+  #         region: AWS_DEFAULT_REGION
+  #         repo: trino-af
+  #         dockerfile: plugin/trino-af/Dockerfile
+  #         tag: "${CIRCLE_BRANCH}-${CIRCLE_SHA1:0:7},latest"
+
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - test
+      # - build-and-push:
+      #     requires:
+      #       - test
+      #     context: aws-ecr
+      #     filters:
+      #       branches:
+      #         only:
+      #           - main
+      #           - develop
