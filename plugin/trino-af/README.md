@@ -48,16 +48,24 @@ cd plugin/trino-af/
 ../../mvnw test
 ```
 
-### Code Coverage
-
-This plugin includes JaCoCo code coverage reporting. To generate coverage reports:
+Start a test server for manual testing:
 
 ```commandline
-cd plugin/trino-af/
-./run-coverage.sh
+cd plugin/trino-af
+../../mvnw compile test-compile exec:java
 ```
 
-Or run Maven directly:
+Access the test server:
+
+```commandline
+trino --server http://localhost:8080 --execute "select af.af.af_find_datasource_by_guid('test-guid-1')"
+```
+
+### Code Coverage
+
+JaCoCo code coverage report is generated on CircleCI.
+
+To manually generate coverage reports:
 
 ```commandline
 cd plugin/trino-af/
@@ -77,20 +85,11 @@ The coverage report shows:
 - **Method Coverage**: Percentage of methods called
 - **Class Coverage**: Percentage of classes instantiated
 
-Start a test server for manual testing:
-
-```commandline
-cd plugin/trino-af
-../../mvnw compile test-compile exec:java
-```
-
-Access the test server:
-
-```commandline
-trino --server http://localhost:8080 --execute "select af.af.af_find_datasource_by_guid('test-guid-1')"
-```
-
 ## Build
+
+The plugin is built on CircleCI.
+
+To manually build the plugin:
 
 ```commandline
 cd plugin/trino-af/
@@ -101,7 +100,9 @@ cd plugin/trino-af/
 
 ## Push
 
-We push a new Trino container with the plugin installed to ECR in the data-api-prod account.
+CircleCI pushes a Trino container image with the plugin installed to ECR in the data-api-prod account.
+
+To manually push an image:
 
 ```commandline
 awsume data-api-prod

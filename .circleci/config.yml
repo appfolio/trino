@@ -10,7 +10,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Run Maven tests with coverage
+          name: test with coverage
           command: |
             cd plugin/trino-af/
             ../../mvnw clean test -Djacoco.skip=false -Djava.vendor="Eclipse Adoptium"
@@ -20,7 +20,7 @@ jobs:
           path: plugin/trino-af/target/site/jacoco
           destination: coverage-report
       - run:
-          name: Display coverage summary
+          name: verify coverage summary
           command: |
             cd plugin/trino-af/
             if [ -f target/site/jacoco/index.html ]; then
@@ -31,32 +31,55 @@ jobs:
               exit 1
             fi
 
-  # build-and-push:
-  #   docker:
-  #     - image: cimg/base:stable
-  #   steps:
-  #     - checkout
-  #     - setup_remote_docker:
-  #         version: 20.10.14
-  #         docker_layer_caching: true
-  #     - aws-ecr/build-and-push-image:
-  #         registry-id: AWS_ACCOUNT_ID
-  #         region: AWS_DEFAULT_REGION
-  #         repo: trino-af
-  #         dockerfile: plugin/trino-af/Dockerfile
-  #         tag: "${CIRCLE_BRANCH}-${CIRCLE_SHA1:0:7},latest"
+  build-and-push:
+    docker:
+      - image: cimg/openjdk:24.0.2
+    steps:
+      - checkout
+      - run:
+          name: build
+          command: |
+            cd plugin/trino-af/
+            ../../mvnw clean package -Djava.vendor="Eclipse Adoptium"
+      - run:
+          name: set environment variables
+          command: |
+            echo 'export REGISTRY_ACCOUNT_ID="307946643675"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+
+            SHORT_COMMIT_SHA=${CIRCLE_SHA1:0:7}
+            echo "export SHORT_COMMIT_SHA='${SHORT_COMMIT_SHA}'" >> $BASH_ENV
+
+            TAG=${CIRCLE_BRANCH//\//-}-${SHORT_COMMIT_SHA}
+            echo "export TAG='${TAG}'" >> $BASH_ENV
+
+            DOCKER_HOST_BLOCK=$(curl -fsSL http://npm-yarn-blocklist.security.appf.io | tr ' ' '\n' | sed 's/^/--add-host=/' | sed 's/$/:127.0.0.1/' | tr '\n' ' ' | sed 's/ $//')
+            echo "export DOCKER_HOST_BLOCK='${DOCKER_HOST_BLOCK}'" >> $BASH_ENV
+
+            echo "ACCESS KEY ID: ${DATA_API_MACHINE_USER_AWS_ACCESS_KEY_ID}"
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - aws-ecr/build-and-push-image:
+          registry-id: REGISTRY_ACCOUNT_ID
+          aws-access-key-id: DATA_API_MACHINE_USER_AWS_ACCESS_KEY_ID
+          aws-secret-access-key: DATA_API_MACHINE_USER_AWS_SECRET_ACCESS_KEY
+          region: us-west-2
+          create-repo: false
+          repo: data-api/trino-af
+          build-path: plugin/trino-af/
+          path: plugin/trino-af/
+          tag: ${TAG}
+          platform: linux/amd64,linux/arm64
+          skip-when-tags-exist: true
+          extra-build-args: ${DOCKER_HOST_BLOCK}
+
 
 workflows:
   version: 2
-  build-deploy:
+  test-build-push:
     jobs:
       - test
-      # - build-and-push:
-      #     requires:
-      #       - test
-      #     context: aws-ecr
-      #     filters:
-      #       branches:
-      #         only:
-      #           - main
-      #           - develop
+      - build-and-push:
+          requires:
+            - test
+          context: data-api-pipeline-trigger-group
