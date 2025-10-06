@@ -34,7 +34,7 @@ git push origin --tags
 ### Check out the Branch
 
 ```commandline
-git checkout 476-af
+git checkout 477-af
 ```
 
 All development work happen in this branch.
@@ -96,7 +96,7 @@ cd plugin/trino-af/
 ../../mvnw package
 ```
 
-`target/trino-af-476.zip` is the plugin file
+`target/trino-af-477.zip` is the plugin file
 
 ## Push
 
