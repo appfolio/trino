@@ -1,4 +1,4 @@
-FROM trinodb/trino:476
+FROM trinodb/trino:477
 
 # Copy the trino-af plugin files
-COPY --chown=trino:trino target/trino-af-476/ /usr/lib/trino/plugin/trino-af
+COPY --chown=trino:trino target/trino-af-477/ /usr/lib/trino/plugin/trino-af

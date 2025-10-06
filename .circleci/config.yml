@@ -4,11 +4,15 @@ orbs:
   aws-ecr: circleci/aws-ecr@8.2.1
 
 jobs:
-  test:
+  test-build-and-push:
     docker:
       - image: cimg/openjdk:24.0.2
     steps:
       - checkout
+      - run:
+          name: build dependencies
+          command: |
+            ./mvnw -B install -Djava.vendor="Eclipse Adoptium" -DskipTests -Dair.check.skip-all -Dskip.npm -pl ':trino-main,:trino-testing,:trino-cache' -am
       - run:
           name: test with coverage
           command: |
@@ -16,26 +20,6 @@ jobs:
             ../../mvnw clean test -Djacoco.skip=false -Djava.vendor="Eclipse Adoptium"
       - store_test_results:
           path: plugin/trino-af/target/surefire-reports
-      - store_artifacts:
-          path: plugin/trino-af/target/site/jacoco
-          destination: coverage-report
-      - run:
-          name: verify coverage summary
-          command: |
-            cd plugin/trino-af/
-            if [ -f target/site/jacoco/index.html ]; then
-              echo "Coverage report generated successfully"
-              echo "View coverage report in CircleCI artifacts"
-            else
-              echo "Coverage report generation failed"
-              exit 1
-            fi
-
-  build-and-push:
-    docker:
-      - image: cimg/openjdk:24.0.2
-    steps:
-      - checkout
       - run:
           name: build
           command: |
@@ -72,14 +56,24 @@ jobs:
           platform: linux/amd64,linux/arm64
           skip-when-tags-exist: true
           extra-build-args: ${DOCKER_HOST_BLOCK}
-
+      - store_artifacts:
+          path: plugin/trino-af/target/site/jacoco
+          destination: coverage-report
+      - run:
+          name: verify coverage summary
+          command: |
+            cd plugin/trino-af/
+            if [ -f target/site/jacoco/index.html ]; then
+              echo "Coverage report generated successfully"
+              echo "View coverage report in CircleCI artifacts"
+            else
+              echo "Coverage report generation failed"
+              exit 1
+            fi
 
 workflows:
   version: 2
-  test-build-push:
+  test-build-and-push:
     jobs:
-      - test
-      - build-and-push:
-          requires:
-            - test
+      - test-build-and-push:
           context: data-api-pipeline-trigger-group
