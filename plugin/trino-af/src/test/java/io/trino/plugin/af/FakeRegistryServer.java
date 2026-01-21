@@ -43,7 +43,7 @@ public class FakeRegistryServer
     {
         Bootstrap app = new Bootstrap(
                 new TestingNodeModule(),
-                new TestingHttpServerModule(),
+                new TestingHttpServerModule("fake-registry-server"),
                 new RegistryServerModule());
 
         Injector injector = app

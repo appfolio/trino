@@ -14,6 +14,7 @@
 package io.trino.plugin.af;
 
 import com.google.inject.Inject;
+import io.airlift.bootstrap.LifeCycleManager;
 import io.trino.spi.connector.Connector;
 import io.trino.spi.connector.ConnectorMetadata;
 import io.trino.spi.connector.ConnectorSession;
@@ -30,10 +31,12 @@ public class AfConnector
 {
     private final ConnectorMetadata metadata;
     private final FunctionProvider functionProvider;
+    private final LifeCycleManager lifeCycleManager;
 
     @Inject
-    public AfConnector(ConnectorMetadata metadata, FunctionProvider functionProvider)
+    public AfConnector(LifeCycleManager lifeCycleManager, ConnectorMetadata metadata, FunctionProvider functionProvider)
     {
+        this.lifeCycleManager = requireNonNull(lifeCycleManager, "lifeCycleManager is null");
         this.metadata = requireNonNull(metadata, "metadata is null");
         this.functionProvider = requireNonNull(functionProvider, "functionProvider is null");
     }
@@ -54,5 +57,11 @@ public class AfConnector
     public Optional<FunctionProvider> getFunctionProvider()
     {
         return Optional.of(functionProvider);
+    }
+
+    @Override
+    public void shutdown()
+    {
+        lifeCycleManager.stop();
     }
 }
