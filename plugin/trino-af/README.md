@@ -13,10 +13,10 @@ brew install trino jenv
 
 ## Install Java
 
-Trino works with Temurin JDK 24.
+Trino works with Temurin JDK 25.
 ```commandline
-brew install temurin
-jenv add /Library/Java/JavaVirtualMachines/temurin-24.jdk/Contents/Home
+brew install temurin@25
+jenv add /Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home
 ```
 
 ## Create a branch
@@ -34,7 +34,7 @@ git push origin --tags
 ### Check out the Branch
 
 ```commandline
-git checkout 477-af
+git checkout 479-af
 ```
 
 All development work happen in this branch.
@@ -96,7 +96,7 @@ cd plugin/trino-af/
 ../../mvnw package
 ```
 
-`target/trino-af-477.zip` is the plugin file
+`target/trino-af-479.zip` is the plugin file
 
 ## Push
 
@@ -110,3 +110,67 @@ awsume data-api-prod
 ```
 
 The output should have the image tag which can be used in Kubernetes Trino setup.
+
+# Upgrade Trino
+
+## Upgrade local dependencies
+
+```commandline
+brew install trino jenv
+```
+
+## Upgrade Java
+
+Trino usually works with the latest JDK. [Trino's documentation](https://github.com/trinodb/trino?tab=readme-ov-file#build-requirements) specifies which JDK version to use. If the local JDK needs upgrade (24 -> 25, for example), follow the instructions below:
+
+```commandline
+brew install temurin@25
+jenv add /Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home
+jenv rehash --force
+```
+
+## Pull new tags
+
+```commandline
+git fetch upstream --tags
+git push origin --tags
+```
+
+## Checkout a branch
+
+Take upgrading to Trino 479 as an example:
+
+```commandline
+git checkout 479
+git checkout -b 479-af
+```
+
+## Cherry-pick from the previous version
+
+Cherry-pick last two changes from [our Trino 477 branch](https://github.com/appfolio/trino/commits/477-af/) for 479 upgrade.
+
+```commandline
+git cherry-pick 24d05d8 8c42954
+```
+
+## Upgrade to the new version
+
+- In `plugin/trino-af/Dockerfile`, upgrade Trino base image to the new version and change the source path of COPY as well.
+- In `plugin/trino-af/pom.xml`, update the parent `trino-root` version to be the new version.
+- In `.circleci/config.yml`, upgrade OpenJDK image to match Trino's JDK version.
+- In `plugin/trino-af/README.md`, update all references of the previous Trino version to the new version as well as JDK version.
+
+## Test
+
+Run automated tests:
+
+```commandline
+cd plugin/trino-af/
+../../mvnw test
+```
+
+If there are test failures, get Claude Code to help fix those failures.
+
+## Commit and push
+
+It may be good to separate changes to different commits for readability. Commit and push all changes. [CircleCI](https://app.circleci.com/pipelines/github/appfolio/trino) should build and push a new container image for Trino.
